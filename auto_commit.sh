@@ -1,27 +1,41 @@
 #!/bin/bash
 
 DAY_FILE=".day"
-BRANCH="main"
+LANGS=("js" "py" "sql")
 
-# Initialize day counter
 if [ ! -f "$DAY_FILE" ]; then
   echo 1 > "$DAY_FILE"
 fi
 
 DAY=$(cat "$DAY_FILE")
+LANG=${LANGS[$((DAY % 3))]}
 
-# Create folder for this day
 FOLDER="day$(printf "%02d" $DAY)"
 mkdir -p "$FOLDER"
 
-# Create or update solution file
-echo "Daily challenge – Day $DAY" > "$FOLDER/solution.txt"
+# -------- Problem generation (placeholder for AI) --------
+cat <<EOF > "$FOLDER/problem.md"
+## Day $DAY Coding Practice
 
-# Commit and push
+Write a solution in ${LANG^^}.
+EOF
+
+# -------- Solution placeholder (AI will replace this later) --------
+case "$LANG" in
+  js)
+    echo "console.log('Day $DAY solution');" > "$FOLDER/solution.js"
+    ;;
+  py)
+    echo "print('Day $DAY solution')" > "$FOLDER/solution.py"
+    ;;
+  sql)
+    echo "-- Day $DAY SQL solution" > "$FOLDER/solution.sql"
+    ;;
+esac
+
 git add .
-git commit -m "Day $DAY challenge"
-git push origin $BRANCH
+git commit -m "Day $DAY coding practice (${LANG})"
+git push origin main
 
-# Increment counter
 echo $((DAY + 1)) > "$DAY_FILE"
 
