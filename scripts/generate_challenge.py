@@ -11,8 +11,10 @@ prompt = (
     "solution code in JavaScript, Python, or SQL."
 )
 
-response = client.text_generation(model="bigcode/starcoder", inputs=prompt, max_new_tokens=400)
+# Fix: use 'prompt' instead of 'inputs'
+response = client.text_generation(model="bigcode/starcoder", prompt=prompt, max_new_tokens=400)
 
+# Hugging Face response may be a list of dicts or a string
 if isinstance(response, list) and "generated_text" in response[0]:
     challenge_text = response[0]["generated_text"]
 else:
@@ -20,4 +22,3 @@ else:
 
 with open(challenge_file, "w") as f:
     f.write(challenge_text)
-
