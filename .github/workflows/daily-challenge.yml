@@ -23,21 +23,20 @@ jobs:
           pip install requests
 
       - name: Prepare directories
-        env:
-          REPO_DIR: ${{ github.workspace }}
         run: |
-          DAY_FILE="$REPO_DIR/.day"
-
+          DAY_FILE=".day"
           if [ ! -f "$DAY_FILE" ]; then
             echo 1 > "$DAY_FILE"
           fi
-
+      
           DAY=$(cat "$DAY_FILE")
-          DAY_DIR="$REPO_DIR/day$(printf "%02d" $DAY)"
+          DAY_DIR="day$(printf "%02d" $DAY)"
           mkdir -p "$DAY_DIR"
+      
           CHALLENGE_FILE="$DAY_DIR/challenge.md"
-          echo $DAY > "$REPO_DIR/.current_day"
-          echo $CHALLENGE_FILE > "$REPO_DIR/.current_file"
+      
+          echo "$DAY" > .current_day
+          echo "CHALLENGE_FILE=$CHALLENGE_FILE" >> $GITHUB_ENV
 
       - name: Generate coding challenge (Python)
         env:
