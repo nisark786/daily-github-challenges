@@ -1,0 +1,67 @@
+name: Daily Coding Challenge
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # runs every day at 9 AM UTC
+  workflow_dispatch:    # allows manual trigger
+
+jobs:
+  generate-challenge:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install huggingface-hub
+
+    - name: Generate coding challenge
+      env:
+        HF_API_KEY: ${{ secrets.HF_API_KEY }}
+      run: |
+        DAY_FILE=".day"
+        REPO_DIR="${{ github.workspace }}"
+
+        # Initialize day counter if not exists
+        if [ ! -f "$REPO_DIR/$DAY_FILE" ]; then
+          echo 1 > "$REPO_DIR/$DAY_FILE"
+        fi
+
+        DAY=$(cat "$REPO_DIR/$DAY_FILE")
+        DAY_DIR="$REPO_DIR/day$(printf "%02d" $DAY)"
+        mkdir -p "$DAY_DIR"
+        CHALLENGE_FILE="$DAY_DIR/challenge.md"
+
+        # Python script to call Hugging Face API
+        python - <<END
+import os
+from huggingface_hub import InferenceClient
+
+client = InferenceClient(token=os.environ['HF_API_KEY'])
+prompt = "Generate a concise coding challenge with problem statement and solution code in JavaScript, Python, or SQL."
+
+response = client.text_generation(model="bigcode/starcoder", inputs=prompt, max_new_tokens=400)
+challenge_text = response.generated_text if hasattr(response, 'generated_text') else str(response)
+
+with open("$CHALLENGE_FILE", "w") as f:
+    f.write(challenge_text)
+END
+
+        # Increment day counter
+        echo $((DAY+1)) > "$REPO_DIR/$DAY_FILE"
+
+    - name: Commit and push
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add .
+        git commit -m "Day $DAY: AI Coding Challenge" || echo "No changes to commit"
+        git push
+
