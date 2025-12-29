@@ -4,7 +4,8 @@ import requests
 HF_API_KEY = os.environ["HF_API_KEY"]
 CHALLENGE_FILE = os.environ.get("CHALLENGE_FILE", "challenge.md")
 
-API_URL = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
+API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+
 HEADERS = {
     "Authorization": f"Bearer {HF_API_KEY}",
     "Content-Type": "application/json"
