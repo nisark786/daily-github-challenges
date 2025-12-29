@@ -22,9 +22,8 @@ jobs:
         run: |
           pip install huggingface-hub
 
-      - name: Generate coding challenge
+      - name: Prepare directories
         env:
-          HF_API_KEY: ${{ secrets.HF_API_KEY }}
           REPO_DIR: ${{ github.workspace }}
         run: |
           DAY_FILE="$REPO_DIR/.day"
@@ -37,33 +36,21 @@ jobs:
           DAY_DIR="$REPO_DIR/day$(printf "%02d" $DAY)"
           mkdir -p "$DAY_DIR"
           CHALLENGE_FILE="$DAY_DIR/challenge.md"
-          export CHALLENGE_FILE
+          echo $DAY > "$REPO_DIR/.current_day"
+          echo $CHALLENGE_FILE > "$REPO_DIR/.current_file"
 
-python3 <<'EOF'
-import os
-from huggingface_hub import InferenceClient
-
-client = InferenceClient(token=os.environ['HF_API_KEY'])
-prompt = "Generate a concise coding challenge with problem statement and solution code in JavaScript, Python, or SQL."
-
-response = client.text_generation(model="bigcode/starcoder", inputs=prompt, max_new_tokens=400)
-
-# Hugging Face response may be list of dicts
-if isinstance(response, list) and "generated_text" in response[0]:
-    challenge_text = response[0]["generated_text"]
-else:
-    challenge_text = str(response)
-
-with open(os.environ['CHALLENGE_FILE'], "w") as f:
-    f.write(challenge_text)
-EOF
-
-          echo $((DAY+1)) > "$DAY_FILE"
+      - name: Generate coding challenge (Python)
+        env:
+          HF_API_KEY: ${{ secrets.HF_API_KEY }}
+          DAY: ${{ steps.prepare.outputs.DAY }}
+          CHALLENGE_FILE: ${{ steps.prepare.outputs.CHALLENGE_FILE }}
+        run: |
+          python3 scripts/generate_challenge.py
 
       - name: Commit and push
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add .
-          git commit -m "Day $DAY: AI Coding Challenge" || echo "No changes to commit"
+          git commit -m "Day $(cat .current_day): AI Coding Challenge" || echo "No changes to commit"
           git push
