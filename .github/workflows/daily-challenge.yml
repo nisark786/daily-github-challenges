@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install huggingface-hub
+          pip install transformers huggingface-hub
 
       - name: Prepare directories
         env:
