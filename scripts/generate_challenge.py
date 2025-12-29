@@ -1,42 +1,33 @@
+from huggingface_hub import InferenceClient
 import os
-import requests
 
-HF_API_KEY = os.environ["HF_API_KEY"]
-CHALLENGE_FILE = os.environ.get("CHALLENGE_FILE", "challenge.md")
+HF_API_KEY = os.getenv("HF_API_KEY")
 
-API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-small"
-HEADERS = {
-    "Authorization": f"Bearer {HF_API_KEY}",
-    "Content-Type": "application/json"
-}
+client = InferenceClient(
+    model="tiiuae/falcon-7b-instruct",
+    token=HF_API_KEY
+)
 
-PROMPT = """
-Generate ONE daily coding challenge.
-
+prompt = """
+Generate a daily coding challenge.
+Difficulty: Easy
+Language: Python
 Include:
-1. Problem statement
-2. Example input/output
-3. Solution code (JavaScript OR Python OR SQL)
-
-Keep it simple and interview friendly.
+- Problem statement
+- Example input/output
+- Constraints
 """
 
-payload = {
-    "inputs": PROMPT,
-    "parameters": {
-        "max_new_tokens": 400
-    }
-}
+response = client.text_generation(
+    prompt,
+    max_new_tokens=300,
+    temperature=0.7
+)
 
-response = requests.post(API_URL, headers=HEADERS, json=payload)
-response.raise_for_status()
+with open(".current_file", "r") as f:
+    challenge_file = f.read().strip()
 
-data = response.json()
+with open(challenge_file, "w") as f:
+    f.write(response)
 
-# flan-t5 returns dict
-text = data.get("generated_text", str(data))
-
-with open(CHALLENGE_FILE, "w", encoding="utf-8") as f:
-    f.write(text)
-
-print("Daily challenge generated successfully")
+print("Challenge generated successfully.")
